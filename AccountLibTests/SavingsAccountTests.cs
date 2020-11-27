@@ -3,7 +3,7 @@ namespace AccountLibTests
     using AccountLib;
     using Moq;
     using NUnit.Framework;
-    using System.Security.Cryptography.X509Certificates;
+    using System;
 
     public class SavingsAccountTests
     {
@@ -31,7 +31,7 @@ namespace AccountLibTests
             double actualBalance = partiallyMockedaccount.Object.Deposit(10000.00);
             double expectedBalance = 15000.00;
 
-            Assert.That (actualBalance, Is.EqualTo(expectedBalance));
+            Assert.That(actualBalance, Is.EqualTo(expectedBalance));
             partiallyMockedaccount.Verify(x => x.GetBalance(), Times.Once());
             partiallyMockedaccount.Verify(x => x.UpdateBalanceInDB(It.IsAny<double>()), Times.Once);
 
@@ -41,7 +41,6 @@ namespace AccountLibTests
             Assert.That(actualBalance, Is.EqualTo(expectedBalance));
             partiallyMockedaccount.Verify(x => x.GetBalance(), Times.AtLeastOnce());
             partiallyMockedaccount.Verify(x => x.UpdateBalanceInDB(It.IsAny<double>()), Times.AtLeastOnce);
-
         }
 
         [Test]
@@ -52,9 +51,25 @@ namespace AccountLibTests
             double actualBalance = partiallyMockedaccount.Object.Deposit(2000.00);
             double expectedBalance = 17000.00;
 
+
             Assert.That(actualBalance, Is.EqualTo(expectedBalance));
             partiallyMockedaccount.Verify(x => x.GetBalance(), Times.Once());
             partiallyMockedaccount.Verify(x => x.UpdateBalanceInDB(It.IsAny<double>()), Times.Once);
+        }
+
+        [Test]
+        public void TestWithdraw1000INRWhenCurrentBalanceIs900INR()
+        {
+            partiallyMockedaccount.Setup(x => x.GetBalance()).Returns(900.00);
+
+            Assert.Throws(Is.TypeOf<Exception>().And.Message.EqualTo("Insufficient Balance"),
+                delegate
+                {
+                    partiallyMockedaccount.Object.Withdraw(1000.00);
+                });
+
+            partiallyMockedaccount.Verify(x => x.GetBalance(), Times.Once);
+            partiallyMockedaccount.Verify(x => x.UpdateBalanceInDB(It.IsAny<double>()), Times.Never);
         }
     }
 }
